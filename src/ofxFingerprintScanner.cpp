@@ -31,10 +31,11 @@ bool ofxFingerprintScanner::isFingerDown(){
     return device.IsPressFinger();
 }
 
-bool ofxFingerprintScanner::getFingerprint(){
+bool ofxFingerprintScanner::getFingerprint( bool raw ){
     if ( isThreadRunning() ){
         return false;
     }
+    bGetRaw = raw;
     startThread();
     return true;
 }
@@ -50,16 +51,19 @@ ofxFPS_GT511C3 & ofxFingerprintScanner::getDevice(){
 
 void ofxFingerprintScanner::threadedFunction(){
     ofSetLogLevel(OF_LOG_VERBOSE);
-    Image_Packet* packet = device.GetImage();
-    static ofImage ret;
-    ret.setUseTexture(false);
-    if (!ret.isAllocated()){
-        ret.allocate(240, 216, OF_IMAGE_GRAYSCALE);
+    Image_Packet* packet = bGetRaw ? device.GetRawImage() : device.GetImage();
+    if ( packet == NULL){
+    } else {
+        static ofImage ret;
+        ret.setUseTexture(false);
+        int w = 240;
+        int h = 216;
+        ret.allocate(w, h, OF_IMAGE_GRAYSCALE);
+        for ( int i=0; i<w * h; i++){
+            ret.getPixels()[i] = (unsigned char) packet->ImageData[i];
+        }
+        ofNotifyEvent(gotFingerprint, ret, this);
     }
-    for ( int i=0; i<240 * 216; i++){
-        ret.getPixels()[i] = (unsigned char) packet->ImageData[i];
-    }
-    ofNotifyEvent(gotFingerprint, ret, this);
     stopThread();
     ofSetLogLevel(OF_LOG_ERROR);
 }

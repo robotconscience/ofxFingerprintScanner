@@ -18,7 +18,7 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     if ( scanner.canCaptureFingerprint() && scanner.isFingerDown() ){
-        scanner.getFingerprint();
+        scanner.getFingerprint( false ); // pass 'false' for not raw, slightly faster
         currentState = "Scanning";
     }
     if ( drawMe.isAllocated() ){

@@ -131,7 +131,8 @@ class Response_Packet
 		static const byte COMMAND_DEVICE_ID_1 = 0x01;	// Device ID Byte 1 (lesser byte)							-	theoretically never changes
 		static const byte COMMAND_DEVICE_ID_2 = 0x00;	// Device ID Byte 2 (greater byte)							-	theoretically never changes
 		int IntFromParameter();
-
+    
+        string getErrorString();
 	protected:
 		bool CheckParsing(byte b, byte propervalue, byte alternatevalue, std::string varname, bool UseSerialDebug);
 		word CalculateChecksum(byte* buffer, int length);
@@ -160,14 +161,15 @@ class Image_Packet : public Response_Packet
 {
 public:
     
-    Image_Packet(byte* buffer);
-    byte ImageData[51840];
-    
+    Image_Packet(byte* buffer, int size);
+    byte * ImageData;
+    int size();
     
     static const byte DATA_START_CODE_1 = 0x5A;	// Static byte to mark the beginning of a data packet	-	never changes
     static const byte DATA_START_CODE_2 = 0xA5;	// Static byte to mark the beginning of a data packet	-	never changes
     
 private:
+    int _size;
     static int NextPacketID;
 };
 #pragma endregion
@@ -291,13 +293,8 @@ class ofxFPS_GT511C3
 
     #pragma region -= Not implemented commands =-
     // Gets entire image packet in one call
-    // Returns: True (device confirming download starting)
     Image_Packet* GetImage();
-
-    // Gets an image that is qvga 160x120 (19200 bytes) and returns it in 150 Data_Packets
-    // Use StartDataDownload, and then GetNextDataPacket until done
-    // Returns: True (device confirming download starting)
-    bool GetRawImage();
+    Image_Packet* GetRawImage();
 
     // Gets a template from the fps (498 bytes) in 4 Data_Packets
     // Use StartDataDownload, and then GetNextDataPacket until done
@@ -351,7 +348,7 @@ class ofxFPS_GT511C3
 private:
 	void SendCommand(byte* cmd, int length);
     Response_Packet* GetResponse();
-    Image_Packet* GetImageResponse();
+    Image_Packet* GetImageResponse( int size = 240 * 216);
 //	 uint8_t pin_RX,pin_TX;
     std::string _portName;
     SharedSerial _serial;

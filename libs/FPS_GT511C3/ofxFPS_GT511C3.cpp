@@ -84,11 +84,16 @@ Command_Packet::Command_Packet()
 };
 #pragma endregion
 
-Image_Packet::Image_Packet(byte* buffer){
-    // be chill
-    for ( int i=0; i<51840; i++){
+Image_Packet::Image_Packet(byte* buffer, int size){
+    ImageData = new byte[size];
+    for ( int i=0; i<size; i++){
         ImageData[i] = buffer[i + 4]; // bc of command offset
     }
+    _size = size;
+}
+
+int Image_Packet::size(){
+    return _size;
 }
 
 #pragma region -= Response_Packet Definitions =-
@@ -156,6 +161,33 @@ Response_Packet::ErrorCodes::Errors_Enum Response_Packet::ErrorCodes::ParseFromB
 		}
 	}
 	return e;
+}
+
+
+string Response_Packet::getErrorString(){
+    switch (Error) {
+        case ErrorCodes::NO_ERROR: return "NO_ERROR";
+        case ErrorCodes::INVALID: return "INVALID";
+        case ErrorCodes::NACK_INVALID_BAUDRATE: return "NACK_INVALID_BAUDRATE";
+        case ErrorCodes::NACK_INVALID_POS: return "NACK_INVALID_POS";
+        case ErrorCodes::NACK_IS_NOT_USED: return "NACK_IS_NOT_USED";
+        case ErrorCodes::NACK_IS_ALREADY_USED: return "NACK_IS_ALREADY_USED";
+        case ErrorCodes::NACK_COMM_ERR: return "NACK_COMM_ERR";
+        case ErrorCodes::NACK_VERIFY_FAILED: return "NACK_VERIFY_FAILED";
+        case ErrorCodes::NACK_IDENTIFY_FAILED: return "NACK_IDENTIFY_FAILED";
+        case ErrorCodes::NACK_DB_IS_FULL: return "NACK_DB_IS_FULL";
+        case ErrorCodes::NACK_TURN_ERR: return "NACK_TURN_ERR";
+        case ErrorCodes::NACK_ENROLL_FAILED: return "NACK_ENROLL_FAILED";
+        case ErrorCodes::NACK_IS_NOT_SUPPORTED: return "NACK_IS_NOT_SUPPORTED";
+        case ErrorCodes::NACK_DEV_ERR: return "NACK_DEV_ERR";
+        case ErrorCodes::NACK_CAPTURE_CANCELED: return "NACK_CAPTURE_CANCELED";
+        case ErrorCodes::NACK_INVALID_PARAM: return "NACK_INVALID_PARAM";
+        case ErrorCodes::NACK_FINGER_IS_NOT_PRESSED: return "NACK_FINGER_IS_NOT_PRESSED";
+            
+        default:
+            return "Invalid error code";
+            break;
+    }
 }
 
 // Gets an int from the parameter chars
@@ -657,7 +689,7 @@ bool ofxFPS_GT511C3::CaptureFinger(bool highquality)
 // Gets an image that is 258x202 (52116 chars)
 Image_Packet* ofxFPS_GT511C3::GetImage()
 {
-    ofLogVerbose("ofxFPS_GT511C3", "FPS - Get Image");
+    ofLogVerbose("ofxFPS_GT511C3", "Get Image");
     Command_Packet* cp = new Command_Packet();
     cp->Command = Command_Packet::Commands::GetImage;
     byte* packetchars = cp->GetPacketBytes();
@@ -666,23 +698,29 @@ Image_Packet* ofxFPS_GT511C3::GetImage()
     bool retval = false;
     if (rp == NULL)
     {
-//        retval = true;
+        ofLogError("ofxFPS_GT511C3", "NACK in response");
     }
-    delete rp;
     delete packetchars;
     delete cp;
     return rp;
-//	// Not implemented due to memory restrictions on the arduino
-//	// may revisit this if I find a need for it
-//	return false;
 }
 
-// Gets an image that is qvga 160x120 (19200 chars) and returns it
-bool ofxFPS_GT511C3::GetRawImage()
+Image_Packet* ofxFPS_GT511C3::GetRawImage()
 {
-	// Not implemented due to memory restrictions on the arduino
-	// may revisit this if I find a need for it
-	return false;
+    ofLogVerbose("ofxFPS_GT511C3", "Get Raw Image");
+    Command_Packet* cp = new Command_Packet();
+    cp->Command = Command_Packet::Commands::GetRawImage;
+    byte* packetchars = cp->GetPacketBytes();
+    SendCommand(packetchars, 12);
+    Image_Packet* rp = GetImageResponse();
+    bool retval = false;
+    if (rp == NULL)
+    {
+        ofLogError("ofxFPS_GT511C3", "NACK in response");
+    }
+    delete packetchars;
+    delete cp;
+    return rp;
 }
 
 // Gets a template from the fps (498 chars) in 4 Data_Packets
@@ -774,7 +812,7 @@ Response_Packet* ofxFPS_GT511C3::GetResponse()
 		{
 			done = true;
         } else {
-            cout << nRead << ":"<< (char) firstbyte <<":"<<(char)Response_Packet::COMMAND_START_CODE_1<< endl;
+            ofLogVerbose() << nRead << ":"<< (char) firstbyte <<":"<<(char)Response_Packet::COMMAND_START_CODE_1<< endl;
         }
 	}
 	byte* resp = new byte[12];
@@ -783,25 +821,22 @@ Response_Packet* ofxFPS_GT511C3::GetResponse()
 	{
         while (_serial->available() == 0){
             // to-do: thread
-            ofSleepMillis(10);
+            ofSleepMillis(1);
         }
 		_serial->read(&resp[i],1);
 	}
 	Response_Packet* rp = new Response_Packet(resp, UseSerialDebug);
 	delete resp;
-	ofLogVerbose("ofxFPS_GT511C3", "FPS - RECV: ");
-    ofLogVerbose()<<rp->RawBytes;
-    
 	return rp;
 };
 
-Image_Packet* ofxFPS_GT511C3::GetImageResponse(){
+Image_Packet* ofxFPS_GT511C3::GetImageResponse( int size ){
     byte firstbyte = 0;
     bool done = false;
     
     // get response packet first!
     Response_Packet * rp = GetResponse();
-    if ( rp->ACK ){
+    if ( rp->ACK == true){
         int cnt = 0;
         while (done == false)
         {
@@ -813,20 +848,17 @@ Image_Packet* ofxFPS_GT511C3::GetImageResponse(){
                 ofLogVerbose() << "got weird byte "<<nRead<<":"<<cnt++<<endl;
             }
         }
-        byte* resp = new byte[51840 + 6];
+        byte* resp = new byte[size + 6];
         resp[0] = firstbyte;
-        for (int i=1; i < 51840 + 6; i++)
+        for (int i=1; i < size + 6; i++)
         {
             while (_serial->available() == 0){
                 // to-do: thread
-                ofSleepMillis(10);
-//                cout<<"sleep?"<<endl;
+                ofSleepMillis(1);
             }
             _serial->read(&resp[i],1);
-//                    cout<<i<<endl;
         }
-        Image_Packet* ip = new Image_Packet(resp);
-    
+        Image_Packet* ip = new Image_Packet(resp, size + 6);
         return ip;
     } else {
         return NULL;

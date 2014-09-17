@@ -24,7 +24,7 @@ public:
     // device methods
     void setLED( bool on );
     bool isFingerDown();
-    bool getFingerprint();
+    bool getFingerprint( bool raw = true );
     
     // utils
     bool canCaptureFingerprint();
@@ -35,6 +35,7 @@ public:
 protected:
     ofxFPS_GT511C3 device;
     bool bConnected;
+    bool bGetRaw;
     
     void threadedFunction();
 };
