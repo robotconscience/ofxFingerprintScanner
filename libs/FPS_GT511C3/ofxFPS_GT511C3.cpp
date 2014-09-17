@@ -335,10 +335,9 @@ bool ofxFPS_GT511C3::ChangeBaudRate(int baud)
 {
 	if ((baud == 9600) || (baud == 19200) || (baud == 38400) || (baud == 57600) || (baud == 115200))
 	{
-        cout <<"changing baudrate"<<endl;
-		ofLogVerbose("ofxFPS_GT511C3", "FPS - ChangeBaudRate");
+        ofLogVerbose("ofxFPS_GT511C3", "Changing baudrate to " + ofToString(baud));
 		Command_Packet* cp = new Command_Packet();
-		cp->Command = Command_Packet::Commands::Open;
+		cp->Command = Command_Packet::Commands::ChangeEBaudRate;
 		cp->ParameterFromInt(baud);
 		byte* packetchars = cp->GetPacketBytes();
 		SendCommand(packetchars, 12);
@@ -359,7 +358,9 @@ bool ofxFPS_GT511C3::ChangeBaudRate(int baud)
 		delete rp;
 		delete packetchars;
 		return retval;
-	}
+    } else {
+        ofLogWarning("ofxFPS_GT511C3", "Invalid baudrate");
+    }
 	return false;
 }
 
@@ -808,7 +809,6 @@ Image_Packet* ofxFPS_GT511C3::GetImageResponse(){
     // get response packet first!
     Response_Packet * rp = GetResponse();
     if ( rp->ACK ){
-        cout << "got good response"<<endl;
         int cnt = 0;
         while (done == false)
         {
@@ -816,12 +816,10 @@ Image_Packet* ofxFPS_GT511C3::GetImageResponse(){
             if (firstbyte == Image_Packet::DATA_START_CODE_1)
             {
                 done = true;
-                cout << "got start"<< endl;
             } else {
-                cout << "got weird byte "<<nRead<<":"<<cnt++<<endl;
+                ofLogVerbose() << "got weird byte "<<nRead<<":"<<cnt++<<endl;
             }
         }
-        cout << "getting bytes"<<endl;
         byte* resp = new byte[51840 + 6];
         resp[0] = firstbyte;
         for (int i=1; i < 51840 + 6; i++)
@@ -835,8 +833,7 @@ Image_Packet* ofxFPS_GT511C3::GetImageResponse(){
 //                    cout<<i<<endl;
         }
         Image_Packet* ip = new Image_Packet(resp);
-        
-        cout << "tight, donezo"<<endl;
+    
         return ip;
     } else {
         return NULL;

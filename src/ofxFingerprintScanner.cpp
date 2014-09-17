@@ -9,7 +9,9 @@
 ofxFingerprintScanner::~ofxFingerprintScanner()
 {
     if ( bConnected ){
+        if ( isThreadRunning() ) waitForThread();
         device.SetLED(false);
+        device.ChangeBaudRate(9600); // this happens when it resets anyways
         device.Close();
     }
 }

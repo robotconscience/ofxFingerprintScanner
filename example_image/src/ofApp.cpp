@@ -6,7 +6,8 @@ string currentState;
 //--------------------------------------------------------------
 void ofApp::setup(){
     ofSerial dummy;
-    scanner.setup(dummy.getDeviceList()[0].getDevicePath());//, 115200);
+    scanner.setup(dummy.getDeviceList()[0].getDevicePath());
+    scanner.getDevice().ChangeBaudRate(115200);
     scanner.setLED(true);
     ofAddListener(scanner.gotFingerprint, this, &ofApp::onNewImage);
     
