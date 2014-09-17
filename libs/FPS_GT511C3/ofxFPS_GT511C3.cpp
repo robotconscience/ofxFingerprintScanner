@@ -335,29 +335,30 @@ bool ofxFPS_GT511C3::ChangeBaudRate(int baud)
 {
 	if ((baud == 9600) || (baud == 19200) || (baud == 38400) || (baud == 57600) || (baud == 115200))
 	{
-        ofLogVerbose("ofxFPS_GT511C3", "Changing baudrate to " + ofToString(baud));
-		Command_Packet* cp = new Command_Packet();
-		cp->Command = Command_Packet::Commands::ChangeEBaudRate;
-		cp->ParameterFromInt(baud);
-		byte* packetchars = cp->GetPacketBytes();
-		SendCommand(packetchars, 12);
-		Response_Packet* rp = GetResponse();
-		bool retval = rp->ACK;
-		if (retval) 
-		{
-            //TODO: test
-            _serial->flush();
-            _serial->close();
-            _serial->setBaudrate(9600);
-            _serial->setBaudrate(baud);
-            _serial->open();
-            ofSleepMillis(1000);
-            cout <<"baudrate changed. "<<_serial->getBaudrate()<<endl;
+        if ( _serial->isOpen() && _serial->getBaudrate() != baud ){
+            ofLogVerbose("ofxFPS_GT511C3", "Changing baudrate to " + ofToString(baud));
+            Command_Packet* cp = new Command_Packet();
+            cp->Command = Command_Packet::Commands::ChangeEBaudRate;
+            cp->ParameterFromInt(baud);
+            byte* packetchars = cp->GetPacketBytes();
+            SendCommand(packetchars, 12);
+            Response_Packet* rp = GetResponse();
+            bool retval = rp->ACK;
+            if (retval) 
+            {
+                //TODO: test
+                _serial->flush();
+                _serial->setBaudrate(baud);
+                ofLogVerbose("ofxFPS_GT511C3") <<"baudrate changed. "<<_serial->getBaudrate()<<endl;
 
-		}
-		delete rp;
-		delete packetchars;
-		return retval;
+            }
+            delete rp;
+            delete packetchars;
+            return retval;
+        } else if (_serial->isOpen()){
+            ofLogVerbose("ofxFPS_GT511C3", "Serial already at this baudrate");
+            return true;
+        }
     } else {
         ofLogWarning("ofxFPS_GT511C3", "Invalid baudrate");
     }

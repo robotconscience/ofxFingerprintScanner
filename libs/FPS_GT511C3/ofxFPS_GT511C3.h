@@ -210,7 +210,6 @@ class ofxFPS_GT511C3
     // Changes the baud rate of the connection
     // Parameter: 9600 - 115200
     // Returns: True if success, false if invalid baud
-    // NOTE: Untested (don't have a logic level changer and a voltage divider is too slow)
     bool ChangeBaudRate(int baud);
 
     // Gets the number of enrolled fingerprints
