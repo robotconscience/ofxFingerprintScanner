@@ -143,7 +143,7 @@ class Response_Packet
 #pragma region -= Data_Packet =- 
 // Data Mule packet for receiving large data(in 128 byte pieces) from the FPS
 // This class can only transmit one packet at a time
-class Data_Packet
+/*class Data_Packet
 {
 public:
 	static int CheckSum;
@@ -154,7 +154,7 @@ public:
 	bool IsLastPacket;
 private:
 	static int NextPacketID;
-};
+};*/
 
 class Image_Packet : public Response_Packet
 {
@@ -290,8 +290,7 @@ class ofxFPS_GT511C3
     #pragma endregion
 
     #pragma region -= Not implemented commands =-
-    // Gets an image that is 258x202 (52116 bytes) and returns it in 407 Data_Packets
-    // Use StartDataDownload, and then GetNextDataPacket until done
+    // Gets entire image packet in one call
     // Returns: True (device confirming download starting)
     Image_Packet* GetImage();
 
@@ -342,12 +341,12 @@ class ofxFPS_GT511C3
     // resets the Data_Packet class, and gets ready to download
     // Not implemented due to memory restrictions on the arduino
     // may revisit this if I find a need for it
-    void StartDataDownload();
+//    void StartDataDownload();
 
     // Returns the next data packet 
     // Not implemented due to memory restrictions on the arduino
     // may revisit this if I find a need for it
-    Data_Packet GetNextDataPacket();
+//    Data_Packet GetNextDataPacket();
 
 private:
 	void SendCommand(byte* cmd, int length);

@@ -654,11 +654,7 @@ bool ofxFPS_GT511C3::CaptureFinger(bool highquality)
 #pragma endregion
 
 #pragma region -= Not imlemented commands =-
-// Gets an image that is 258x202 (52116 chars) and returns it in 407 Data_Packets
-// Use StartDataDownload, and then GetNextDataPacket until done
-// Returns: True (device confirming download starting)
-	// Not implemented due to memory restrictions on the arduino
-	// may revisit this if I find a need for it
+// Gets an image that is 258x202 (52116 chars)
 Image_Packet* ofxFPS_GT511C3::GetImage()
 {
     ofLogVerbose("ofxFPS_GT511C3", "FPS - Get Image");
@@ -681,11 +677,7 @@ Image_Packet* ofxFPS_GT511C3::GetImage()
 //	return false;
 }
 
-// Gets an image that is qvga 160x120 (19200 chars) and returns it in 150 Data_Packets
-// Use StartDataDownload, and then GetNextDataPacket until done
-// Returns: True (device confirming download starting)
-	// Not implemented due to memory restrictions on the arduino
-	// may revisit this if I find a need for it
+// Gets an image that is qvga 160x120 (19200 chars) and returns it
 bool ofxFPS_GT511C3::GetRawImage()
 {
 	// Not implemented due to memory restrictions on the arduino
@@ -731,20 +723,20 @@ bool ofxFPS_GT511C3::GetRawImage()
 // resets the Data_Packet class, and gets ready to download
 	// Not implemented due to memory restrictions on the arduino
 	// may revisit this if I find a need for it
-void ofxFPS_GT511C3::StartDataDownload()
-{
+//void ofxFPS_GT511C3::StartDataDownload()
+//{
 	// Not implemented due to memory restrictions on the arduino
 	// may revisit this if I find a need for it
-}
+//}
 
 // Returns the next data packet 
 	// Not implemented due to memory restrictions on the arduino
 	// may revisit this if I find a need for it
-Data_Packet GetNextDataPacket()
-{
-    static Data_Packet dummy;
-	return dummy;
-}
+//Data_Packet GetNextDataPacket()
+//{
+//    static Data_Packet dummy;
+//	return dummy;
+//}
 
 // Commands that are not implemented (and why)
 // VerifyTemplate1_1 - Couldn't find a good reason to implement this on an arduino
